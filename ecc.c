@@ -12,6 +12,15 @@ void ECC_destroyCTX()
 {
 	BN_CTX_free(ctx);
 }
+void ECC_ptCopy(PT *p_dst, PT *p_src)
+{
+	fprintf(stderr, "copying\n");
+	ECC_fPrintPt(stderr, p_src);
+	fprintf(stderr, "to pt that currently holds\n");
+	ECC_fPrintPt(stderr, p_dst);
+	BN_copy(p_dst->x, p_src->x);
+	BN_copy(p_dst->y, p_src->y);
+}
 int ECC_ptEq(PT *p1, PT *p2)
 {
 	if(BN_cmp(p1->x, p2->x) || BN_cmp(p1->y, p2->y))
@@ -24,6 +33,8 @@ PT *ECC_ptNew(int x, int y)
 	PT *p = malloc(sizeof(PT));
 	char x_str[11];
 	char y_str[11];
+	p->x = BN_new();
+	p->y = BN_new();
 
 	sprintf(x_str, "%d", x);
 	sprintf(y_str, "%d", y);
@@ -62,6 +73,9 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BIGNUM *tmp4 = BN_new();
 	BIGNUM *tmp5 = BN_new();
 
+	fprintf(stderr, "Add points\n");
+	ECC_fPrintPt(stderr, p1);
+	ECC_fPrintPt(stderr, p2);
 
 
 	BN_dec2bn(&two, "2");
@@ -100,6 +114,8 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BN_mod_mul(tmp2, m, tmp1, curve->p, ctx);
 	BN_mod_sub(p3->y, tmp2, p1->y, curve->p, ctx);
 
+	fprintf(stderr, "result = ");
+	ECC_fPrintPt(stderr, p3);
 
 	//	clean up
 	BN_free(two);

@@ -4,28 +4,36 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "ecc.h"
+#include <openssl/bn.h>
 
-int ecc_mul(int a, int b);
-int _ecc_mul(int factor, int *subSolution);
-int _ecc_add(int factor1, int factor2, int *subSolution);
-int normalAdd(int, int);
+#define N_SUBSOLUTIONS 1000
+
+void ecc_mul(PT * , BIGNUM *, PT *, CURVE *);
 
 
 /*******
 *	Simple version of multiplying by adding, on the normal axis.
 */
-int ecc_mul(int a, int b)
+void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 {
-	int *subSolution;
-	int factor;
-	int term;
-	int result;
-	//	Use the smallest number as factor to limit number of additions
-	factor = (a < b)?a:b;
-	term = (factor == a)?b:a;
 
-	subSolution = malloc((factor + 1) * sizeof(int));
-	memset(subSolution, 0, (factor + 1) * sizeof(int));
+	BN_CTX *ctxx = BN_CTX_new();
+	PT *subSolution[N_SUBSOLUTIONS];
+	int n;
+	BIGNUM *twoToThePowerOfN = BN_new();
+	char two_str[] = "2";
+	BIGNUM *two_bn = BN_new();
+	BN_dec2bn(&two_bn, two_str);
+	PT *tmp_ecc = ECC_ptNew(0,0);
+	BIGNUM *tmp_bn = BN_new();
+	PT *result = NULL;
+
+
+	for(n = 0; n < N_SUBSOLUTIONS; ++n)
+		subSolution[n] = NULL;
+	//	Subsolutions for 2^idx
+	//	subSolution[N_SUBSOLUTIONS];
 
 
 	//	If a value has been set on an element in the subSolution array
@@ -33,44 +41,47 @@ int ecc_mul(int a, int b)
 	//	This is why factor is used to index the array.
 	//	The whole point of this is to only calculate the subSolutions we need.
 	//	Set the solution for factor = 1 to term
-	subSolution[1] = term;	
+	subSolution[0] = p;
 	
-	result = _ecc_mul(factor, subSolution);
+	while(! BN_is_zero(k)) {
 
-	free(subSolution);
-	return result;
-}
-int _ecc_mul(int factor, int *subSolution)
-{
-	if(factor == 1) {
-
-		return subSolution[1];
-	} else
-	if(subSolution[factor] == 0) {
-		fprintf(stderr, "I do not know khaleesi\n");
-
-		if(factor % 2) {
-
-			subSolution[factor - 1] = _ecc_add(factor / 2, factor / 2, subSolution);
-			subSolution[factor] = _ecc_add(factor - 1, 1, subSolution);
-		} else {
-
-			subSolution[factor] = _ecc_add(factor / 2, factor / 2, subSolution);
+		BN_copy(twoToThePowerOfN, two_bn);
+		for(n = 1; BN_cmp(twoToThePowerOfN, k) <= 0; BN_sqr(twoToThePowerOfN, twoToThePowerOfN, ctxx), ++n) {
+		printf("inner\n");
+			if(subSolution[n] == NULL) {
+				printf("not known\n");
+				subSolution[n] = ECC_ptNew(0,0);
+				ECC_ptAdd(subSolution[n], subSolution[n-1], subSolution[n-1], curve);
+			}
+			else {
+				printf("known\n");
+				continue;
+			}
+			ECC_fPrintPt(stdout, subSolution[n]);
 		}
-	} 
-	else 
-		fprintf(stderr, "It is known.\n");
+		if(result == NULL) {
+			printf("copy first result to total\n");
+			result = ECC_ptNew(0,0);
+			ECC_ptCopy(result, subSolution[n-1]);
+		}
+		else {
+			printf("add result to total\n");
+			ECC_ptAdd(tmp_ecc, result, subSolution[n-1], curve);
+			ECC_ptCopy(result, tmp_ecc);
+		}
 
-	return subSolution[factor];
+		if(BN_cmp(twoToThePowerOfN, two_bn) == 0) {
+			break;
+		}
+		else {
+			BN_rshift1(tmp_bn, twoToThePowerOfN);
+			BN_copy(twoToThePowerOfN, tmp_bn);
+			BN_sub(k, k, twoToThePowerOfN);
+		}
+		fprintf(stderr, "rest of factor k is:\n");
+		BN_print_fp(stderr, k);
+		fprintf(stderr, "\n");
+	}
+	ECC_ptCopy(p_out, result);
 }
-int _ecc_add(int factor1, int factor2, int *subSolution)
-{
-	int term1 = _ecc_mul(factor1, subSolution);
-	int term2 = _ecc_mul(factor2, subSolution);
 
-	return normalAdd(term1, term2);
-}
-int normalAdd(int t1, int t2)
-{
-	return t1+t2;
-}

@@ -24,6 +24,7 @@ PT *ECC_ptNew(int, int);
 CURVE *ECC_curveNew(int, int, int);
 
 int ECC_ptEq(PT *, PT *);
+void ECC_ptCopy(PT *, PT *);
 void ECC_ptAdd(PT *, PT *, PT *, CURVE *);
 void ECC_fPrintPt(FILE *, PT *);
 
