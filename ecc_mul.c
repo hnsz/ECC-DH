@@ -47,6 +47,7 @@ int _ecc_mul(int factor, int *subSolution)
 		return subSolution[1];
 	} else
 	if(subSolution[factor] == 0) {
+		fprintf(stderr, "I do not know khaleesi\n");
 
 		if(factor % 2) {
 
@@ -57,6 +58,8 @@ int _ecc_mul(int factor, int *subSolution)
 			subSolution[factor] = _ecc_add(factor / 2, factor / 2, subSolution);
 		}
 	} 
+	else 
+		fprintf(stderr, "It is known.\n");
 
 	return subSolution[factor];
 }
