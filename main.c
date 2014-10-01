@@ -4,13 +4,14 @@
 
 int main(int argc, char *argv[])
 {
-/*
+
 	int term1;
 	int term2;
 	sscanf(argv[1], "%d", &term1);
 	sscanf(argv[2], "%d", &term2);
 	printf("%d * %d = %d\n", term1, term2, ecc_mul(term1, term2));
-*/
+
+/*
 	ECC_createCTX();
 
 	CURVE *curve;
@@ -27,7 +28,7 @@ int main(int argc, char *argv[])
 
 	ECC_fPrintPt(stderr, p3);
 	ECC_destroyCTX();
-/*
+
 */
 	return 0;
 }
