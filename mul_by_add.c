@@ -42,7 +42,7 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 	//	a tmp PT * that is used for 2 step operations on points
 	PT *tmp_pt = ECC_ptNew(0,0);
 
-	//	Holds cumulation of intermediate results of k*p
+	//	Holds cumulation of intermediate results for k*p
 	//	Is set to NULL so that the first intermediate result is 
 	//	placed in it instead of added to it. 
 	//	Will be copied to p_out in the end.
@@ -50,15 +50,23 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 
 
 
+	
 	//	2^0 * p = 1*p
-	subSolution[0] = p;
-	//	highest power for which subsolution is know is 0
+	//	  ^         ^
+	//	Set solution for 0 to p
+	subSolution[0] = ECC_ptNew(0,0);
+	ECC_ptCopy(subSolution[0], p);
+
+	//	highest power for which a subsolution is know is 0
 	nMax = 0;
 
 	while(! BN_is_zero(k)) {
 
-
+		//	Always start with 2^1
 		BN_copy(twoToTheN, two_bn);
+
+		//	Keep multiplying by 2 until greater than k, 
+		//	multiplication happens at end of body
 		for(n = 1; BN_cmp(twoToTheN, k) <= 0; ++n) {
 
 			if(n > nMax) {
@@ -78,10 +86,16 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 			ECC_fPrintPt(stderr, subSolution[n]);
 			//	END DEBUG
 
+
 			//	multiply by 2
 			BN_lshift1(tmp_bn, twoToTheN);
-			BN_swap(twoToTheN, tmp_bn);
+			BN_swap(twoToTheN, tmp_bn);	
+			//nb. swap is more efficient than copy and it doesn't matter what value tmp_bn
+			//holds after this
 		}
+
+
+
 		if(result == NULL) {
 			//	DEBUG
 			fprintf(stderr, "copy first result to total\n");
@@ -107,6 +121,7 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		fprintf(stderr, "\n");
 		//	END DEBUG
 
+		//	Subtract from k and put rest in k for new round
 		BN_sub(tmp_bn, k, twoToTheN);
 		BN_swap(k, tmp_bn);
 
@@ -116,6 +131,22 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		fprintf(stderr, "\n");
 		//	END DEBUG
 	}
+
+	//	Copy result to the destination pt that was given as an argument
 	ECC_ptCopy(p_out, result);
+
+
+
+	//	clean up
+
+	for(n = 0; n < nMax; ++n) {
+		ECC_ptFree(subSolution[n]);
+	}
+
+	BN_free(twoToTheN);
+	BN_free(two_bn);
+	BN_free(tmp_bn);
+	ECC_ptFree(tmp_pt);
+	ECC_ptFree(result);
 }
 
