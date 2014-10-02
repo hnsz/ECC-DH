@@ -1,5 +1,5 @@
 /*******
-*	Multitplying as we did in the olden days.
+*	Multitplying as we did in the olden days..
 */
 #include <string.h>
 #include <stdlib.h>
@@ -12,9 +12,6 @@
 void ecc_mul(PT * , BIGNUM *, PT *, CURVE *);
 
 
-/*******
-*	Simple version of multiplying by adding, on the normal axis.
-*/
 void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 {
 
