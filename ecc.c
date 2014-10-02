@@ -12,6 +12,11 @@ void ECC_destroyCTX()
 {
 	BN_CTX_free(ctx);
 }
+void ECC_ptSetFromStr(PT *p, char *x_str, char *y_str)
+{
+	BN_dec2bn(&(p->x), x_str);
+	BN_dec2bn(&(p->y), y_str);
+}
 void ECC_ptCopy(PT *p_dst, PT *p_src)
 {
 	fprintf(stderr, "copying\n");
@@ -39,10 +44,15 @@ PT *ECC_ptNew(int x, int y)
 	sprintf(x_str, "%d", x);
 	sprintf(y_str, "%d", y);
 
-	BN_dec2bn(&(p->x), x_str);
-	BN_dec2bn(&(p->y), y_str);
+	ECC_ptSetFromStr(p, x_str, y_str);
 
 	return p;
+}
+void ECC_curveSetFromStr(CURVE *curve, char *p_str, char *a_str, char *b_str)
+{
+	BN_dec2bn(&(curve->p), p_str);
+	BN_dec2bn(&(curve->a), a_str);
+	BN_dec2bn(&(curve->b), b_str);
 }
 CURVE *ECC_curveNew(int p, int a, int b)
 {
@@ -55,9 +65,7 @@ CURVE *ECC_curveNew(int p, int a, int b)
 	sprintf(a_str, "%d", a);
 	sprintf(b_str, "%d", b);
 
-	BN_dec2bn(&(curve->p), p_str);
-	BN_dec2bn(&(curve->a), a_str);
-	BN_dec2bn(&(curve->b), b_str);
+	ECC_curveSetFromStr(curve, p_str, a_str, b_str);
 
 	return curve;
 }

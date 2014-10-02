@@ -22,6 +22,9 @@ typedef struct curve_t CURVE;
 
 PT *ECC_ptNew(int, int);
 CURVE *ECC_curveNew(int, int, int);
+void ECC_ptSetFromStr(PT *, char *, char *);
+void ECC_curveSetFromStr(CURVE *, char *, char *, char *);
+
 
 int ECC_ptEq(PT *, PT *);
 void ECC_ptCopy(PT *, PT *);

@@ -18,10 +18,10 @@ void ecc_mul(PT * , BIGNUM *, PT *, CURVE *);
 void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 {
 
-	BN_CTX *ctxx = BN_CTX_new();
+	BN_CTX *ctx = BN_CTX_new();
 	PT *subSolution[N_SUBSOLUTIONS];
 	int n;
-	BIGNUM *twoToThePowerOfN = BN_new();
+	BIGNUM *twoToTheN = BN_new();
 	char two_str[] = "2";
 	BIGNUM *two_bn = BN_new();
 	BN_dec2bn(&two_bn, two_str);
@@ -45,42 +45,62 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 	
 	while(! BN_is_zero(k)) {
 
-		BN_copy(twoToThePowerOfN, two_bn);
-		for(n = 1; BN_cmp(twoToThePowerOfN, k) <= 0; BN_sqr(twoToThePowerOfN, twoToThePowerOfN, ctxx), ++n) {
-		printf("inner\n");
+
+		BN_copy(twoToTheN, two_bn);
+		for(n = 1; BN_cmp(twoToTheN, k) <= 0; ++n) {
+
 			if(subSolution[n] == NULL) {
-				printf("not known\n");
+				//	DEBUG
+				fprintf(stderr, "Subsolution for 2^%d NOT known\n", n);
+				//	END DEBUG
 				subSolution[n] = ECC_ptNew(0,0);
 				ECC_ptAdd(subSolution[n], subSolution[n-1], subSolution[n-1], curve);
 			}
 			else {
-				printf("known\n");
-				continue;
+				//	DEBUG
+				fprintf(stderr, "Subsolution for 2^%d IS known\n", n);
+				//	END DEBUG
 			}
-			ECC_fPrintPt(stdout, subSolution[n]);
+			//	DEBUG
+			ECC_fPrintPt(stderr, subSolution[n]);
+			//	END DEBUG
+
+			
+			BN_mul(twoToTheN, twoToTheN, two_bn, ctx);
 		}
 		if(result == NULL) {
-			printf("copy first result to total\n");
+			//	DEBUG
+			fprintf(stderr, "copy first result to total\n");
+			//	END DEBUG
 			result = ECC_ptNew(0,0);
 			ECC_ptCopy(result, subSolution[n-1]);
 		}
 		else {
-			printf("add result to total\n");
+			//	DEBUG
+			fprintf(stderr, "add result to total\n");
+			//	END DEBUG
 			ECC_ptAdd(tmp_ecc, result, subSolution[n-1], curve);
 			ECC_ptCopy(result, tmp_ecc);
 		}
 
-		if(BN_cmp(twoToThePowerOfN, two_bn) == 0) {
-			break;
-		}
-		else {
-			BN_rshift1(tmp_bn, twoToThePowerOfN);
-			BN_copy(twoToThePowerOfN, tmp_bn);
-			BN_sub(k, k, twoToThePowerOfN);
-		}
+
+		BN_rshift1(tmp_bn, twoToTheN);
+		BN_copy(twoToTheN, tmp_bn);
+
+		//	DEBUG
+		fprintf(stderr, "2 to the power of n is (hex):\n");
+		BN_print_fp(stderr, twoToTheN);
+		fprintf(stderr, "\n");
+		//	END DEBUG
+
+		BN_sub(tmp_bn, k, twoToTheN);
+		BN_copy(k, tmp_bn);
+
+		//	DEBUG
 		fprintf(stderr, "rest of factor k is:\n");
 		BN_print_fp(stderr, k);
 		fprintf(stderr, "\n");
+		//	END DEBUG
 	}
 	ECC_ptCopy(p_out, result);
 }
