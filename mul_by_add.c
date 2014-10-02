@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "ecc.h"
+#include "mul_by_add.h"
 #include <openssl/bn.h>
 
 #define N_SUBSOLUTIONS 1000
 
-void ECC_mul(PT * , BIGNUM *, PT *, CURVE *);
 
 
 
@@ -26,6 +26,12 @@ void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 	//	(so it is known which subsolutions are known
 	int nMax;
 
+	//	The factor by wich to multiply the point
+	//	This gets eaten up by the algorithm until it reaches zero
+	//	Then the multiplication is complete
+	BIGNUM *factor = BN_new();
+	BN_copy(factor, k);
+
 	//	holds the actual value of 2^n
 	BIGNUM *twoToTheN = BN_new();
 
@@ -39,6 +45,7 @@ void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 
 	//	a tmp PT * that is used for 2 step operations on points
 	PT *tmp_pt = ECC_ptNew(0,0);
+
 
 	//	Holds cumulation of intermediate results for k*p
 	//	Is set to NULL so that the first intermediate result is 
@@ -58,14 +65,15 @@ void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 	//	highest power for which a subsolution is know is 0
 	nMax = 0;
 
-	while(! BN_is_zero(k)) {
+
+	while(! BN_is_zero(factor)) {
 
 		//	Always start with 2^1
 		BN_copy(twoToTheN, two_bn);
 
-		//	Keep multiplying by 2 until greater than k, 
+		//	Keep multiplying by 2 until greater than factor, 
 		//	multiplication happens at end of body
-		for(n = 1; BN_cmp(twoToTheN, k) <= 0; ++n) {
+		for(n = 1; BN_cmp(twoToTheN, factor) <= 0; ++n) {
 
 			if(n > nMax) {
 				nMax = n;
@@ -100,9 +108,9 @@ void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		BN_swap(twoToTheN, tmp_bn);
 
 
-		//	Subtract from k and put rest in k for new round
-		BN_sub(tmp_bn, k, twoToTheN);
-		BN_swap(k, tmp_bn);
+		//	Subtract from factor and put rest in factor for new round
+		BN_sub(tmp_bn, factor, twoToTheN);
+		BN_swap(factor, tmp_bn);
 
 	}
 
