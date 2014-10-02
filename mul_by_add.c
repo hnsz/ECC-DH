@@ -91,7 +91,8 @@ void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		}
 
 
-
+		//	First time, (when result is null) the intermediate result is stored in result
+		//	All subsequent round the intermediate result is added to result
 		if(result == NULL) {
 
 			result = ECC_ptNew(0,0);
