@@ -9,10 +9,11 @@
 
 #define N_SUBSOLUTIONS 1000
 
-void ecc_mul(PT * , BIGNUM *, PT *, CURVE *);
+void ECC_mul(PT * , BIGNUM *, PT *, CURVE *);
 
 
-void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
+
+void ECC_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 {
 
 	//	Subsolutions for 2^n * point on the elliptic curve

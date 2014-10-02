@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	ECC_ptSetFromStr(p1, x_str, y_str);
 
 	
-	ecc_mul(p2, k, p1, curve);
+	ECC_mul(p2, k, p1, curve);
 
 	printf("Solution to exercise 17\n");
 	ECC_fPrintPt(stdout, p2);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	p2 = ECC_ptNew(0, 0);
 	p3 = ECC_ptNew(0, 0);
 
-	curve = ECC_curveNew(41, 10, -21);
+	curve = ECC_curveNew(41, 10, 21);
 
 	BIGNUM *mAlice = BN_new();
 	BN_dec2bn(&mAlice, m1_str);
@@ -76,11 +76,11 @@ int main(int argc, char *argv[])
 	printf("Solution to exercise 15\n");
 	
 
-	ecc_mul(p2, mAlice, p1, curve);
+	ECC_mul(p2, mAlice, p1, curve);
 	printf("Alice sends to Bob\n");
 	ECC_fPrintPt(stdout, p2);
 
-	ecc_mul(p3, mBob, p2, curve);
+	ECC_mul(p3, mBob, p2, curve);
 	printf("Bob calculates shared secret\n");
 	ECC_fPrintPt(stdout, p3);
 
