@@ -66,12 +66,6 @@ void ECC_ptSetFromStr(PT *p, char *x_str, char *y_str)
 //	Copies the x,y values from one PT to another PT
 void ECC_ptCopy(PT *p_dst, PT *p_src)
 {
-	//	DEBUG
-	fprintf(stderr, "copying\n");
-	ECC_fPrintPt(stderr, p_src);
-	fprintf(stderr, "to pt that currently holds\n");
-	ECC_fPrintPt(stderr, p_dst);
-	//	END DEBUG
 	BN_copy(p_dst->x, p_src->x);
 	BN_copy(p_dst->y, p_src->y);
 }
@@ -97,11 +91,6 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BIGNUM *tmp4 = BN_new();
 	BIGNUM *tmp5 = BN_new();
 
-	//	DEBUG
-	fprintf(stderr, "Add points\n");
-	ECC_fPrintPt(stderr, p1);
-	ECC_fPrintPt(stderr, p2);
-	//	EN DEBUG
 
 
 	BN_dec2bn(&two, "2");
@@ -141,10 +130,6 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BN_mod_mul(tmp2, m, tmp1, curve->p, ctx);
 	BN_mod_sub(p3->y, tmp2, p1->y, curve->p, ctx);
 
-	//	DEBUG
-	fprintf(stderr, "result = ");
-	ECC_fPrintPt(stderr, p3);
-	//	END DEBUG
 
 	//	clean up
 	BN_free(two);

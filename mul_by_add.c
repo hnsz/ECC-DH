@@ -71,20 +71,10 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 
 			if(n > nMax) {
 				nMax = n;
-				//	DEBUG
-				fprintf(stderr, "Subsolution for 2^%d NOT known\n", n);
-				//	END DEBUG
+
 				subSolution[n] = ECC_ptNew(0,0);
 				ECC_ptAdd(subSolution[n], subSolution[n-1], subSolution[n-1], curve);
 			}
-			else {
-				//	DEBUG
-				fprintf(stderr, "Subsolution for 2^%d IS known\n", n);
-				//	END DEBUG
-			}
-			//	DEBUG
-			ECC_fPrintPt(stderr, subSolution[n]);
-			//	END DEBUG
 
 
 			//	multiply by 2
@@ -97,16 +87,12 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 
 
 		if(result == NULL) {
-			//	DEBUG
-			fprintf(stderr, "copy first result to total\n");
-			//	END DEBUG
+
 			result = ECC_ptNew(0,0);
 			ECC_ptCopy(result, subSolution[n-1]);
 		}
 		else {
-			//	DEBUG
-			fprintf(stderr, "add result to total\n");
-			//	END DEBUG
+
 			ECC_ptAdd(tmp_pt, result, subSolution[n-1], curve);
 			ECC_ptCopy(result, tmp_pt);
 		}
@@ -115,21 +101,11 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		BN_rshift1(tmp_bn, twoToTheN);
 		BN_swap(twoToTheN, tmp_bn);
 
-		//	DEBUG
-		fprintf(stderr, "2 to the power of n is (hex):\n");
-		BN_print_fp(stderr, twoToTheN);
-		fprintf(stderr, "\n");
-		//	END DEBUG
 
 		//	Subtract from k and put rest in k for new round
 		BN_sub(tmp_bn, k, twoToTheN);
 		BN_swap(k, tmp_bn);
 
-		//	DEBUG
-		fprintf(stderr, "rest of factor k is:\n");
-		BN_print_fp(stderr, k);
-		fprintf(stderr, "\n");
-		//	END DEBUG
 	}
 
 	//	Copy result to the destination pt that was given as an argument
