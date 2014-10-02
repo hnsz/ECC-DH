@@ -4,6 +4,7 @@
 
 BN_CTX *ctx;
 
+
 void ECC_createCTX()
 {
 	ctx = BN_CTX_new();
@@ -19,10 +20,12 @@ void ECC_ptSetFromStr(PT *p, char *x_str, char *y_str)
 }
 void ECC_ptCopy(PT *p_dst, PT *p_src)
 {
+	//	DEBUG
 	fprintf(stderr, "copying\n");
 	ECC_fPrintPt(stderr, p_src);
 	fprintf(stderr, "to pt that currently holds\n");
 	ECC_fPrintPt(stderr, p_dst);
+	//	END DEBUG
 	BN_copy(p_dst->x, p_src->x);
 	BN_copy(p_dst->y, p_src->y);
 }
@@ -48,6 +51,12 @@ PT *ECC_ptNew(int x, int y)
 
 	return p;
 }
+void ECC_ptFree(PT *p)
+{
+	BN_free(p->x);
+	BN_free(p->y);
+	free(p);
+}
 void ECC_curveSetFromStr(CURVE *curve, char *p_str, char *a_str, char *b_str)
 {
 	BN_dec2bn(&(curve->p), p_str);
@@ -69,6 +78,13 @@ CURVE *ECC_curveNew(int p, int a, int b)
 
 	return curve;
 }
+void ECC_curveFree(CURVE *curve)
+{
+	BN_free(curve->p);
+	BN_free(curve->a);
+	BN_free(curve->b);
+	free(curve);
+}
 void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 {
 
@@ -81,9 +97,11 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BIGNUM *tmp4 = BN_new();
 	BIGNUM *tmp5 = BN_new();
 
+	//	DEBUG
 	fprintf(stderr, "Add points\n");
 	ECC_fPrintPt(stderr, p1);
 	ECC_fPrintPt(stderr, p2);
+	//	EN DEBUG
 
 
 	BN_dec2bn(&two, "2");
@@ -115,6 +133,7 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BN_mod_sqr(tmp1, m, curve->p, ctx);
 	BN_mod_sub(tmp2, tmp1, p1->x, curve->p, ctx);
 	BN_mod_sub(p3->x, tmp2, p2->x,  curve->p, ctx);
+	//	All tmp variables can be used again
 
 	
 	//	y3 = m*(x1 - x3) - y1 (mod p)
@@ -122,8 +141,10 @@ void ECC_ptAdd(PT *p3, PT *p1, PT *p2, CURVE *curve)
 	BN_mod_mul(tmp2, m, tmp1, curve->p, ctx);
 	BN_mod_sub(p3->y, tmp2, p1->y, curve->p, ctx);
 
+	//	DEBUG
 	fprintf(stderr, "result = ");
 	ECC_fPrintPt(stderr, p3);
+	//	END DEBUG
 
 	//	clean up
 	BN_free(two);

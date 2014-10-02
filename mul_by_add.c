@@ -18,38 +18,51 @@ void ecc_mul(PT * , BIGNUM *, PT *, CURVE *);
 void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 {
 
-	BN_CTX *ctx = BN_CTX_new();
+	//	Subsolutions for 2^n * point on the elliptic curve
 	PT *subSolution[N_SUBSOLUTIONS];
+
+	//	n represents both the power, and the index of subSolutions
 	int n;
+
+	//	the highest power of two reached so far
+	//	(so it is known which subsolutions are known
+	int nMax;
+
+	//	holds the actual value of 2^n
 	BIGNUM *twoToTheN = BN_new();
-	char two_str[] = "2";
+
+	//	a bignum with the value 2
 	BIGNUM *two_bn = BN_new();
+	char two_str[] = "2";
 	BN_dec2bn(&two_bn, two_str);
-	PT *tmp_ecc = ECC_ptNew(0,0);
+
+	//	a tmp bignum that is used as a temp in 2 step operations
 	BIGNUM *tmp_bn = BN_new();
+
+	//	a tmp PT * that is used for 2 step operations on points
+	PT *tmp_pt = ECC_ptNew(0,0);
+
+	//	Holds cumulation of intermediate results of k*p
+	//	Is set to NULL so that the first intermediate result is 
+	//	placed in it instead of added to it. 
+	//	Will be copied to p_out in the end.
 	PT *result = NULL;
 
 
-	for(n = 0; n < N_SUBSOLUTIONS; ++n)
-		subSolution[n] = NULL;
-	//	Subsolutions for 2^idx
-	//	subSolution[N_SUBSOLUTIONS];
 
-
-	//	If a value has been set on an element in the subSolution array
-	//	the value will be factor * term
-	//	This is why factor is used to index the array.
-	//	The whole point of this is to only calculate the subSolutions we need.
-	//	Set the solution for factor = 1 to term
+	//	2^0 * p = 1*p
 	subSolution[0] = p;
-	
+	//	highest power for which subsolution is know is 0
+	nMax = 0;
+
 	while(! BN_is_zero(k)) {
 
 
 		BN_copy(twoToTheN, two_bn);
 		for(n = 1; BN_cmp(twoToTheN, k) <= 0; ++n) {
 
-			if(subSolution[n] == NULL) {
+			if(n > nMax) {
+				nMax = n;
 				//	DEBUG
 				fprintf(stderr, "Subsolution for 2^%d NOT known\n", n);
 				//	END DEBUG
@@ -65,8 +78,9 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 			ECC_fPrintPt(stderr, subSolution[n]);
 			//	END DEBUG
 
-			
-			BN_mul(twoToTheN, twoToTheN, two_bn, ctx);
+			//	multiply by 2
+			BN_lshift1(tmp_bn, twoToTheN);
+			BN_swap(twoToTheN, tmp_bn);
 		}
 		if(result == NULL) {
 			//	DEBUG
@@ -79,13 +93,13 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 			//	DEBUG
 			fprintf(stderr, "add result to total\n");
 			//	END DEBUG
-			ECC_ptAdd(tmp_ecc, result, subSolution[n-1], curve);
-			ECC_ptCopy(result, tmp_ecc);
+			ECC_ptAdd(tmp_pt, result, subSolution[n-1], curve);
+			ECC_ptCopy(result, tmp_pt);
 		}
 
-
+		//	Always shoots over once so devide by 2
 		BN_rshift1(tmp_bn, twoToTheN);
-		BN_copy(twoToTheN, tmp_bn);
+		BN_swap(twoToTheN, tmp_bn);
 
 		//	DEBUG
 		fprintf(stderr, "2 to the power of n is (hex):\n");
@@ -94,7 +108,7 @@ void ecc_mul(PT *p_out, BIGNUM *k, PT *p, CURVE *curve)
 		//	END DEBUG
 
 		BN_sub(tmp_bn, k, twoToTheN);
-		BN_copy(k, tmp_bn);
+		BN_swap(k, tmp_bn);
 
 		//	DEBUG
 		fprintf(stderr, "rest of factor k is:\n");
